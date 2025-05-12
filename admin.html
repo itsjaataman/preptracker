@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - eVidhyalaya Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        /* --- Custom CSS Variables (from index.html for consistency) --- */
+        :root {
+            --primary: #6366f1;
+            --secondary: #4f46e5;
+            --bg-dark: #0f172a;      /* Use bg-dark for body */
+            --card-bg: #1e293b;      /* Use card-bg for sidebar/cards */
+            --text-main: #f8fafc;    /* Default text */
+            --text-muted: #94a3b8;   /* Muted text */
+            --border-color: #334155; /* Default border */
+            --input-bg: var(--bg-dark);/* Input background */
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --success: #22c55e;
+            --accent: #f59e0b;
+        }
+
+        /* --- Base Styles --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+        }
+
+        /* --- Scrollbar --- */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* --- Sidebar Scrollbar Hide --- */
+        .sidebar-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .sidebar-scroll::-webkit-scrollbar { display: none; }
+
+        /* --- Form Elements Styling (Consistent with index.html using vars) --- */
+        input[type="text"], input[type="number"], input[type="date"], input[type="email"], textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            margin-bottom: 1rem;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 0.5rem; /* rounded-lg */
+            font-size: 1rem;
+            color-scheme: dark;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5); /* Ring effect */
+        }
+        input[type="date"] { width: auto; }
+        input::placeholder { color: var(--text-muted); }
+        textarea { font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; line-height: 1.4; }
+
+        /* --- Button Styles --- */
+        .btn {
+            cursor: pointer; transition: background-color 0.2s, opacity 0.2s;
+            padding: 0.8rem 1.5rem; border: none; border-radius: 0.5rem; /* rounded-lg */
+            font-size: 1rem; font-weight: 500; /* medium */
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .btn:disabled { cursor: not-allowed; opacity: 0.6; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover:not(:disabled) { background-color: var(--secondary); }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-danger:hover:not(:disabled) { background-color: var(--danger-hover); }
+        .btn-secondary { background-color: #475569; color: white; }
+        .btn-secondary:hover:not(:disabled) { background-color: #64748b; }
+
+        /* --- Admin Status Styles --- */
+        .admin-status { margin-top: 1rem; min-height: 1.2em; font-size: 0.9rem; }
+        .admin-status.success { color: var(--success); }
+        .admin-status.error { color: var(--danger); }
+
+        /* --- Specific Admin Card/Content Styling --- */
+        /* Re-use card-bg and structure from index.html */
+        .admin-content-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem; /* p-6 */
+            border-radius: 0.75rem; /* rounded-xl */
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); /* shadow-lg */
+            margin-bottom: 1.5rem; /* space-y-6 */
+        }
+        .admin-content-card h3 { /* Section titles */
+             font-size: 1.25rem; /* text-xl */
+             font-weight: 600; /* font-semibold */
+             color: var(--text-main);
+             margin-bottom: 1rem;
+             padding-bottom: 0.5rem;
+             border-bottom: 1px solid var(--border-color);
+        }
+         .admin-content-card h4 { /* Sub-section titles (like JEE/NEET) */
+              font-size: 1.1rem;
+              font-weight: 600;
+              color: var(--primary);
+              margin-top: 1rem;
+              margin-bottom: 0.5rem;
+         }
+
+        /* --- Student Progress Display Specific Styles (Copied from previous version) --- */
+        .student-search-form { display: flex; align-items: flex-end; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .student-search-form .flex-grow { flex-grow: 1; min-width: 200px; }
+        #studentEmailInput { margin-bottom: 0 !important; }
+        .student-progress-display { background-color: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; min-height: 150px; margin-top: 1rem; }
+        .progress-item { margin-bottom: 0.8rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--border-color); }
+        .progress-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .progress-item strong { color: var(--primary); }
+        .subject-progress-bar { width: 100%; background-color: #334155; border-radius: 9999px; height: 8px; overflow: hidden; margin-top: 4px; }
+        .subject-progress-fill { background: linear-gradient(to right, var(--primary), var(--secondary)); height: 100%; border-radius: 9999px; transition: width 0.3s ease-out; }
+        .mock-test-entry-admin { font-size: 0.9rem; padding: 0.5rem 0; border-bottom: 1px dashed #334155; }
+        .mock-test-entry-admin:last-child { border-bottom: none; }
+        .subject-header-admin { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0.5rem 0.2rem; border-radius: 4px; transition: background-color 0.2s; }
+        .subject-header-admin:hover { background-color: #334155; }
+        .subject-header-admin .subject-name { font-weight: 600; }
+        .chapter-detail-admin { background-color: #1a2333; padding: 0.8rem; margin-bottom: 0.5rem; border: 1px solid #334155; border-radius: 6px; }
+        .chapter-toggles-admin label { display: inline-flex; align-items: center; margin-right: 1rem; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted); }
+        .chapter-toggles-admin input[type="checkbox"] { margin-right: 0.4rem; accent-color: var(--primary); cursor: default; }
+        .back-button-admin { background: #475569; color: white; padding: 0.4rem 0.8rem; border: none; border-radius: 6px; font-size: 0.9rem; margin-bottom: 1rem; cursor: pointer; }
+        .back-button-admin:hover { background: #64748b; }
+
+        /* Utility classes needed */
+        .text-text-muted { color: var(--text-muted); }
+        .text-error-color { color: var(--danger); }
+        .text-center { text-align: center; }
+
+    </style>
+    <script>
+        // Tailwind Configuration (Optional, but good practice if extending)
+        tailwind.config = {
+          darkMode: 'class', // Assuming dark mode is default
+          theme: {
+            extend: {
+              colors: {
+                primary: { DEFAULT: '#6366f1', dark: '#4f46e5' },
+                secondary: '#a855f7',
+                danger: { DEFAULT: '#ef4444', hover: '#dc2626'},
+                success: '#22c55e',
+                accent: '#f59e0b',
+                'card-bg': '#1e293b',
+                'bg-dark': '#0f172a',
+                'text-main': '#f8fafc',
+                'text-muted': '#94a3b8',
+                'border-color': '#334155',
+                'input-bg': '#0f172a'
+              },
+              fontFamily: { sans: ['Inter', 'sans-serif'], },
+            }
+          }
+        }
+      </script>
+</head>
+<body class="bg-bg-dark text-text-main">
+
+    <div id="authMessage" class="min-h-screen flex items-center justify-center p-4 text-center" style="display: flex;">
+        <div class="bg-card-bg p-8 rounded-xl shadow-lg border border-border-color max-w-md w-full">
+            <h1 class="text-2xl font-semibold mb-4 text-primary">eVidhyalaya Admin</h1>
+            <p id="authMessageText" class="text-text-muted">Checking authentication...</p>
+            </div>
+    </div>
+
+    <div id="adminAppContainer" class="md:flex min-h-screen" style="display: none;">
+
+        <aside id="adminSidebar" class="sidebar-scroll fixed inset-y-0 left-0 z-40 w-64 bg-card-bg p-4 border-r border-border-color transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col overflow-y-auto">
+            <div class="text-center mb-8">
+                 <h1 class="text-2xl font-bold text-primary">eVidhyalaya</h1>
+                 <p class="text-sm text-text-muted">Admin Panel</p>
+            </div>
+
+            <nav class="flex-grow space-y-2">
+                <a href="#" class="nav-item group flex items-center px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-700 hover:text-white transition-colors duration-200" onclick="showSectionAdmin('advertisementSection')">
+                    <i class="fas fa-bullhorn w-5 h-5 mr-3 text-slate-400 group-hover:text-white"></i> 📢 Advertisement
+                </a>
+                <a href="#" class="nav-item group flex items-center px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-700 hover:text-white transition-colors duration-200" onclick="showSectionAdmin('examConfigSection')">
+                    <i class="fas fa-cogs w-5 h-5 mr-3 text-slate-400 group-hover:text-white"></i> ⚙️ Exam Config
+                </a>
+                <a href="#" class="nav-item group flex items-center px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-700 hover:text-white transition-colors duration-200" onclick="showSectionAdmin('studentProgressSection')">
+                    <i class="fas fa-user-graduate w-5 h-5 mr-3 text-slate-400 group-hover:text-white"></i> 👨‍🎓 Student Progress
+                </a>
+                </nav>
+
+            <div class="mt-auto pt-4 border-t border-border-color">
+                <div id="adminInfo" class="text-xs text-center text-text-muted mb-3 px-2">Logged in as: <span id="adminUserEmail"></span></div>
+                <a href="#" class="nav-item group flex items-center px-4 py-3 rounded-lg text-slate-300 hover:bg-red-600 hover:text-white transition-colors duration-200" onclick="logout()">
+                    <i class="fas fa-sign-out-alt w-5 h-5 mr-3 text-slate-400 group-hover:text-white"></i> 🔒 Logout
+                </a>
+            </div>
+        </aside>
+
+        <div id="adminOverlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden" onclick="toggleSidebarAdmin()"></div>
+
+        <main class="main-content flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+            <div class="md:hidden flex justify-between items-center mb-6 pb-4 border-b border-border-color">
+                 <h1 class="text-xl font-bold text-primary">eVidhyalaya Admin</h1>
+                 <button id="adminHamburgerBtn" class="text-text-main focus:outline-none" onclick="toggleSidebarAdmin()">
+                     <i class="fas fa-bars text-2xl"></i>
+                 </button>
+            </div>
+
+            <div id="loadingIndicator" class="loading-indicator text-center p-10 text-lg text-text-muted" style="display: none;">Loading...</div>
+
+            <div id="adminSectionsContainer" class="space-y-6">
+
+                <div id="advertisementSection" class="admin-section" style="display: none;">
+                    <div class="admin-content-card">
+                        <h3>📢 Update Advertisement</h3>
+                        <p class="text-sm text-text-muted mb-4">Enter the text or HTML for the banner shown on the student dashboard.</p>
+                        <label for="adminAdContent">Advertisement Content (HTML allowed):</label>
+                        <textarea id="adminAdContent" rows="5" placeholder="Enter advertisement HTML or text here..." class="mb-4"></textarea>
+                        <button onclick="saveAdvertisement()" class="btn btn-primary w-full sm:w-auto">Save Advertisement</button>
+                        <p id="adminAdSaveStatus" class="admin-status"></p>
+                    </div>
+                </div>
+
+                <div id="examConfigSection" class="admin-section" style="display: none;">
+                    <div class="admin-content-card">
+                        <h3>⚙️ Update Exam Configurations</h3>
+                        <p class="text-sm text-text-muted mb-6">Set default exam dates and manage subject/chapter lists (use valid JSON format).</p>
+
+                        <div class="mb-6 pb-4 border-b border-border-color">
+                            <h4>JEE</h4>
+                            <label for="adminJeeDate">Default Exam Date:</label>
+                            <input type="date" id="adminJeeDate" class="mb-3">
+                            <label for="adminJeeChapters">Subject/Chapter Mapping (JSON):</label>
+                            <textarea id="adminJeeChapters" rows="8" placeholder="Enter JEE subject/chapter JSON..."></textarea>
+                        </div>
+
+                        <div class="mb-6 pb-4 border-b border-border-color">
+                            <h4>NEET</h4>
+                            <label for="adminNeetDate">Default Exam Date:</label>
+                            <input type="date" id="adminNeetDate" class="mb-3">
+                            <label for="adminNeetChapters">Subject/Chapter Mapping (JSON):</label>
+                            <textarea id="adminNeetChapters" rows="10" placeholder="Enter NEET subject/chapter JSON..."></textarea>
+                        </div>
+
+                        <div class="mb-6">
+                            <h4>BITSAT</h4>
+                            <label for="adminBitsatDate">Default Exam Date:</label>
+                            <input type="date" id="adminBitsatDate" class="mb-3">
+                            <label for="adminBitsatChapters">Subject/Chapter Mapping (JSON):</label>
+                            <textarea id="adminBitsatChapters" rows="8" placeholder="Enter BITSAT subject/chapter JSON..."></textarea>
+                        </div>
+
+                        <button onclick="saveExamConfigurations()" class="btn btn-primary w-full sm:w-auto">Save Exam Configurations</button>
+                        <p id="adminConfigSaveStatus" class="admin-status"></p>
+                    </div>
+                </div>
+
+                <div id="studentProgressSection" class="admin-section" style="display: none;">
+                     <div class="admin-content-card">
+                        <h3>👨‍🎓 Track Student Progress</h3>
+                        <div class="student-search-form">
+                            <div class="flex-grow">
+                                <label for="studentEmailInput">Enter Student Email:</label>
+                                <input type="email" id="studentEmailInput" placeholder="student@example.com">
+                            </div>
+                            <button onclick="findStudentProgress()" class="btn btn-primary">Search</button>
+                        </div>
+                        <p id="studentSearchStatus" class="admin-status mb-4"></p>
+                        <div id="studentProgressResult" class="student-progress-display">
+                             <p class="text-text-muted text-center">Enter a student email and click Search.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div> <footer class="mt-12 py-4 border-t border-border-color text-center text-sm text-text-muted">
+                © <span id="currentYear"></span> eVidhyalaya Admin Panel.
+            </footer>
+
+        </main> </div> <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script>
+     // --- Firebase Configuration ---
+        // IMPORTANT: Replace with your actual config. Keep API keys secure.const firebaseConfig = {
+        //   const firebaseConfig = {
+        //   apiKey: "addapikeyhere", // Replace with your actual config
+        //   authDomain: "addauthdomain",
+        //   projectId: "addprojectid",
+        //   storageBucket: "addyourkey",
+        //   messagingSenderId: "addyourkey",
+        //   appId: "addyourkey",
+        //   measurementId: "addyourkey"
+        // };
+        
+        // --- Global Admin Variables ---
+        let firebaseInitialized = false;
+        let auth, db;
+        let currentUser = null;
+        const ADMIN_EMAILS = ['test1@gmail.com', 'test2@gmail.com']; // Define admin users here
+        let IS_ADMIN = false;
+        let globalExamConfig = null;
+        let configFetchAttempted = false;
+        let currentStudentDataForAdmin = null;
+
+        // --- Firebase Initialization ---
+        try {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            else firebase.app();
+            firebaseInitialized = true;
+            auth = firebase.auth();
+            db = firebase.firestore();
+            console.log("Admin: Firebase initialized.");
+        } catch (e) {
+            console.error("CRITICAL: Admin Firebase initialization failed.", e);
+            const authMsg = document.getElementById('authMessageText');
+            if(authMsg) authMsg.innerHTML = `<span class="text-error-color">Initialization Error: ${e.message}</span>`;
+        }
+
+        // --- Authentication ---
+        if (firebaseInitialized) {
+            auth.onAuthStateChanged(user => {
+                const adminAppContainer = document.getElementById('adminAppContainer');
+                const authMessageDiv = document.getElementById('authMessage');
+                const authMessageText = document.getElementById('authMessageText');
+
+                if (user) {
+                    currentUser = user;
+                    IS_ADMIN = ADMIN_EMAILS.includes(user.email);
+                    console.log("Admin Page: User logged in:", user.email, "Is Admin:", IS_ADMIN);
+
+                    if (IS_ADMIN) {
+                        authMessageDiv.style.display = 'none';
+                        adminAppContainer.style.display = 'flex'; // Use flex for the md:flex layout
+                        document.getElementById('adminUserEmail').textContent = user.email;
+                        document.getElementById('currentYear').textContent = new Date().getFullYear();
+                        loadAdminPanelData().then(() => {
+                            showSectionAdmin('examConfigSection'); // Default section
+                        });
+                    } else {
+                        // Logged in but not an admin
+                        adminAppContainer.style.display = 'none';
+                        authMessageDiv.style.display = 'flex';
+                        authMessageText.innerHTML = '<span class="text-error-color">Access Denied. Administrator privileges required.</span>';
+                        auth.signOut(); // Log out non-admins automatically
+                    }
+                } else {
+                    // Logged out
+                    currentUser = null; IS_ADMIN = false; currentStudentDataForAdmin = null;
+                    adminAppContainer.style.display = 'none';
+                    authMessageDiv.style.display = 'flex';
+                    authMessageText.textContent = 'Please log in via the main application or contact support.';
+                     // Optional: Add FirebaseUI login here if needed
+                    console.log("Admin Page: No user logged in.");
+                     // Ensure sidebar is hidden on logout for mobile consistency
+                     const sidebar = document.getElementById('adminSidebar');
+                     const overlay = document.getElementById('adminOverlay');
+                     if (sidebar && overlay && !sidebar.classList.contains('-translate-x-full')) {
+                          sidebar.classList.add('-translate-x-full');
+                          overlay.classList.add('hidden');
+                     }
+                }
+            });
+        }
+
+        // --- Sidebar and Section Navigation ---
+        function toggleSidebarAdmin() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('adminOverlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
+        }
+
+        function showSectionAdmin(sectionId) {
+            console.log(`Showing admin section: ${sectionId}`);
+             // Close sidebar on mobile when a section is selected
+             const sidebar = document.getElementById('adminSidebar');
+             const overlay = document.getElementById('adminOverlay');
+             if (sidebar && overlay && window.innerWidth < 768 && !sidebar.classList.contains('-translate-x-full')) {
+                 toggleSidebarAdmin();
+             }
+
+            // Hide all sections first
+            document.querySelectorAll('.admin-section').forEach(section => {
+                section.style.display = 'none';
+            });
+
+            // Show the target section
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            } else {
+                console.error(`Admin section with ID '${sectionId}' not found.`);
+                // Optionally show a default section like 'examConfigSection'
+                document.getElementById('examConfigSection').style.display = 'block';
+            }
+
+            // Highlight active nav item
+            document.querySelectorAll('#adminSidebar .nav-item').forEach(item => {
+                 const isActive = item.getAttribute('onclick')?.includes(`showSectionAdmin('${sectionId}')`);
+                 item.classList.toggle('bg-slate-700', isActive);
+                 item.classList.toggle('text-white', isActive);
+                 item.classList.toggle('text-slate-300', !isActive);
+                 const icon = item.querySelector('i');
+                 if (icon) {
+                     icon.classList.toggle('text-white', isActive);
+                     icon.classList.toggle('text-slate-400', !isActive);
+                 }
+            });
+        }
+
+
+        // --- Loading Indicator Control ---
+        function showLoadingIndicator(message = "Loading...") {
+             const indicator = document.getElementById('loadingIndicator');
+             const sectionsContainer = document.getElementById('adminSectionsContainer');
+             if (indicator) { indicator.textContent = message; indicator.style.display = 'block'; }
+             if (sectionsContainer) sectionsContainer.style.display = 'none';
+         }
+         function hideLoadingIndicator() {
+             const indicator = document.getElementById('loadingIndicator');
+             const sectionsContainer = document.getElementById('adminSectionsContainer');
+             if (indicator) indicator.style.display = 'none';
+             if (sectionsContainer) sectionsContainer.style.display = 'block';
+         }
+
+        // --- Exam Configuration Fetching (Keep existing function) ---
+        async function fetchExamConfigurations() {
+             if (globalExamConfig || configFetchAttempted) return globalExamConfig;
+             console.log("Admin: Fetching exam configurations...");
+             configFetchAttempted = true;
+             try {
+                 const configRef = db.collection('config');
+                 const [jeeDoc, neetDoc, bitsatDoc] = await Promise.all([
+                     configRef.doc('exam_JEE').get(), configRef.doc('exam_NEET').get(), configRef.doc('exam_BITSAT').get()
+                 ]);
+                 const parseConfig = (doc, examName) => { /* ... Same parsing logic ... */
+                    if (!doc.exists) return { examDate: null, subjectChapterMapping: {}, chapters: [], toggles: [] };
+                    const data = doc.data(); let mapping = {};
+                    try {
+                         if (typeof data.subjectChapterMapping === 'string') mapping = JSON.parse(data.subjectChapterMapping || '{}');
+                         else if (typeof data.subjectChapterMapping === 'object' && data.subjectChapterMapping !== null) mapping = data.subjectChapterMapping;
+                    } catch (e) { console.error(`Error parsing mapping JSON for ${examName}:`, e); mapping = {}; }
+                    const chapters = Object.values(mapping || {}).flat();
+                    const defaultToggles = (eName) => { /* ... Same default toggles ... */
+                       switch (eName) {
+                           case 'JEE': return ["Lecture", "Revision", "DPPs", "Module", "Test", "Formula Sheet"];
+                           case 'NEET': return ["Lecture", "Short Notes", "NCERT Text", "NCERT InText", "PYQ 10 Yrs"];
+                           case 'BITSAT': return ["Concepts", "Practice Qs", "Revision", "Mock Test"];
+                           default: return ["Done"];
+                       }
+                    };
+                    const toggles = data.toggles || defaultToggles(examName);
+                    return { examDate: data.examDate || null, subjectChapterMapping: mapping, chapters: chapters, toggles: toggles };
+                 };
+                 globalExamConfig = { JEE: parseConfig(jeeDoc, 'JEE'), NEET: parseConfig(neetDoc, 'NEET'), BITSAT: parseConfig(bitsatDoc, 'BITSAT') };
+                 console.log("Admin: Exam configurations loaded.", globalExamConfig);
+                 return globalExamConfig;
+             } catch (error) {
+                 console.error("Admin: Error fetching exam configurations:", error);
+                 globalExamConfig = null; configFetchAttempted = false; return null;
+             }
+         }
+
+        // --- Admin Panel Initial Data Loading ---
+        async function loadAdminPanelData() {
+            // This function now focuses only on populating the form fields.
+            // Showing/hiding sections is handled by showSectionAdmin.
+            if (!IS_ADMIN) return;
+            console.log("Loading data for admin forms...");
+            showLoadingIndicator("Loading Settings Data..."); // Indicate loading
+
+            try {
+                // Load Advertisement Content
+                const adContentInput = document.getElementById('adminAdContent');
+                if (adContentInput) {
+                    try {
+                        const adDoc = await db.collection('config').doc('advertisement').get();
+                        adContentInput.value = adDoc.exists ? (adDoc.data().htmlContent || '') : '';
+                    } catch (error) { console.error("Error loading ad content:", error); adContentInput.value = 'Error loading ad.'; }
+                }
+
+                // Load Exam Configurations (Requires config to be fetched first)
+                const config = await fetchExamConfigurations(); // Ensure config is loaded
+                if (!config) throw new Error("Exam configurations could not be loaded.");
+
+                const fields = {
+                    adminJeeDate: config.JEE?.examDate || '',
+                    adminJeeChapters: config.JEE?.subjectChapterMapping ? JSON.stringify(config.JEE.subjectChapterMapping, null, 2) : '{}',
+                    adminNeetDate: config.NEET?.examDate || '',
+                    adminNeetChapters: config.NEET?.subjectChapterMapping ? JSON.stringify(config.NEET.subjectChapterMapping, null, 2) : '{}',
+                    adminBitsatDate: config.BITSAT?.examDate || '',
+                    adminBitsatChapters: config.BITSAT?.subjectChapterMapping ? JSON.stringify(config.BITSAT.subjectChapterMapping, null, 2) : '{}',
+                };
+
+                for (const id in fields) {
+                    const el = document.getElementById(id);
+                    if (el) el.value = fields[id];
+                    else console.warn(`Element with ID ${id} not found during data load.`);
+                }
+
+                console.log("Admin forms populated.");
+            } catch (error) {
+                 console.error("Error loading admin panel data:", error);
+                 // Display a general error message?
+                 alert("Error loading some admin settings: " + error.message);
+            } finally {
+                hideLoadingIndicator(); // Hide loading indicator, show content sections
+            }
+        }
+
+        // --- Admin Panel Save Functions (Keep existing functions) ---
+        async function saveAdvertisement() {
+             if (!IS_ADMIN || !db) return;
+             const adContentInput = document.getElementById('adminAdContent');
+             const statusEl = document.getElementById('adminAdSaveStatus');
+             if (!adContentInput || !statusEl) return;
+             const newContent = adContentInput.value;
+             statusEl.textContent = 'Saving...'; statusEl.className = 'admin-status';
+             try {
+                 await db.collection('config').doc('advertisement').set({ htmlContent: newContent, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+                 statusEl.textContent = 'Advertisement saved!'; statusEl.className = 'admin-status success';
+                 setTimeout(() => { statusEl.textContent = ''; }, 3000);
+             } catch (error) { /* ... error handling ... */
+                 console.error("Error saving ad:", error); statusEl.textContent = 'Error saving.'; statusEl.className = 'admin-status error';
+             }
+         }
+        async function saveExamConfigurations() {
+             if (!IS_ADMIN || !db) return;
+             const statusEl = document.getElementById('adminConfigSaveStatus');
+             statusEl.textContent = 'Saving...'; statusEl.className = 'admin-status';
+             // ... (Validation logic remains the same) ...
+            const getDateValue = (id) => document.getElementById(id).value;
+            const getJsonValue = (id) => document.getElementById(id).value;
+            const dates = { JEE: getDateValue('adminJeeDate'), NEET: getDateValue('adminNeetDate'), BITSAT: getDateValue('adminBitsatDate') };
+            const jsonStrings = { JEE: getJsonValue('adminJeeChapters'), NEET: getJsonValue('adminNeetChapters'), BITSAT: getJsonValue('adminBitsatChapters') };
+            const mappings = {}; let isValid = true; const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            for (const exam in dates) { /* ... Same validation ... */
+                if (dates[exam] && !dateRegex.test(dates[exam])) { statusEl.textContent = `Invalid date: ${exam}`; isValid = false; break; }
+                try { mappings[exam] = JSON.parse(jsonStrings[exam] || '{}'); if (typeof mappings[exam] !== 'object' || mappings[exam] === null) throw new Error();}
+                catch (e) { statusEl.textContent = `Invalid JSON: ${exam}`; isValid = false; break; }
+            } if (!isValid) { statusEl.className = 'admin-status error'; return; }
+
+             const batch = db.batch(); const configRef = db.collection('config'); const ts = firebase.firestore.FieldValue.serverTimestamp();
+             for (const exam in mappings) { batch.set(configRef.doc(`exam_${exam}`), { examDate: dates[exam] || null, subjectChapterMapping: mappings[exam], lastUpdated: ts }, { merge: true }); }
+             try {
+                 await batch.commit();
+                 statusEl.textContent = 'Configurations saved!'; statusEl.className = 'admin-status success';
+                 globalExamConfig = null; configFetchAttempted = false; // Reset cache
+                 setTimeout(() => { statusEl.textContent = ''; }, 3000);
+             } catch (error) { /* ... error handling ... */
+                 console.error("Error saving config:", error); statusEl.textContent = 'Error saving.'; statusEl.className = 'admin-status error';
+             }
+         }
+
+        // --- Student Progress Tracking Functions (Keep existing functions) ---
+        async function findStudentProgress() {
+            if (!IS_ADMIN || !db) { alert("Access Denied."); return; }
+            const emailInput = document.getElementById('studentEmailInput');
+            const resultDiv = document.getElementById('studentProgressResult');
+            const statusEl = document.getElementById('studentSearchStatus');
+            const email = emailInput.value.trim().toLowerCase();
+            currentStudentDataForAdmin = null; // Reset
+
+            if (!email) { /* ... input validation ... */ statusEl.textContent = 'Enter email.'; statusEl.className = 'admin-status error'; return; }
+            statusEl.textContent = 'Searching...'; statusEl.className = 'admin-status';
+            resultDiv.innerHTML = '<p class="text-text-muted text-center">Loading...</p>';
+
+             try { /* ... Same fetching logic ... */
+                const usersRef = db.collection('users');
+                const querySnapshot = await usersRef.where('email', '==', email).limit(1).get();
+                if (querySnapshot.empty) { /* ... not found handling ... */
+                    statusEl.textContent = 'Not found.'; statusEl.className = 'admin-status error';
+                    resultDiv.innerHTML = `<p class="text-error-color text-center">No student: ${email}</p>`; return;
+                }
+                currentStudentDataForAdmin = querySnapshot.docs[0].data();
+                if (!globalExamConfig) await fetchExamConfigurations();
+                if (!globalExamConfig) throw new Error("Exam Configs needed.");
+                displayStudentData(currentStudentDataForAdmin, resultDiv); // Show initial view
+                statusEl.textContent = `Showing: ${email}`; statusEl.className = 'admin-status success';
+             } catch (error) { /* ... error handling, including index check ... */
+                 console.error("Error finding student:", error);
+                 statusEl.textContent = 'Error: ' + error.message; statusEl.className = 'admin-status error';
+                 resultDiv.innerHTML = `<p class="text-error-color text-center">Error fetching data.</p>`;
+                 if (error.code === 'failed-precondition') alert("Firestore index needed: users collection, email field.");
+             }
+         }
+        function displayStudentData(data, container) {
+            // ... (Same rendering logic as previous step for stats, clickable subjects, mocks) ...
+             container.innerHTML = ''; if (!data) { container.innerHTML = '<p>Invalid data</p>'; return; }
+             const examType = data.examType || 'N/A'; const config = globalExamConfig ? globalExamConfig[examType] : null; const progress = data.progress || {};
+             let statsHTML = `<div class="progress-item"> ... Stats ... </div>`; // Full HTML for stats
+             statsHTML = `
+                 <div class="progress-item">
+                     <p><strong>Email:</strong> ${data.email || 'N/A'}</p> <p><strong>Exam:</strong> ${examType}</p>
+                     <p><strong>Streak:</strong> 🔥 ${data.currentStreak || 0} / 🏆 ${data.longestStreak || 0}</p>
+                     <p><strong>Points:</strong> ⭐ ${data.studyPoints || 0}</p> <p><strong>Freezes:</strong> ❄️ ${data.streakFreezesAvailable ?? 'N/A'}</p>
+                     <p><strong>Custom Date:</strong> ${data.customExamDate || 'Default'}</p>
+                 </div>`;
+             let overall = 0, chapters = 0; if (config?.chapters?.length > 0) { chapters = config.chapters.length; const sum = config.chapters.reduce((s, c) => s + (progress[c]?.progress || 0), 0); overall = sum / chapters; }
+             statsHTML += `<div class="progress-item"><p><strong>Overall Progress:</strong> ${chapters > 0 ? overall.toFixed(1) + '%' : 'N/A'}</p></div>`;
+             let subjectsHTML = '<div class="progress-item"><h4>Subject Progress (Click):</h4>';
+             if (config?.subjectChapterMapping) { /* ... Same clickable subject rendering ... */
+                 Object.keys(config.subjectChapterMapping).forEach(subject => {
+                     const chaps = config.subjectChapterMapping[subject] || []; const totProg = chaps.reduce((s, c) => s + (progress[c]?.progress || 0), 0); const subjProg = chaps.length > 0 ? totProg / chaps.length : 0; const escSubj = subject.replace(/'/g, "\\'");
+                     subjectsHTML += `<div class="subject-header-admin" onclick="displaySubjectChaptersAdmin('${escSubj}')"><span class="subject-name">${subject}</span><span><strong>${subjProg.toFixed(1)}%</strong> <i class="fas fa-chevron-right text-xs"></i></span></div> <div class="subject-progress-bar mb-2"><div class="subject-progress-fill" style="width:${subjProg.toFixed(1)}%;"></div></div>`; });
+             } else { subjectsHTML += '<p>Config error.</p>'; } subjectsHTML += '</div>';
+             let mocksHTML = '<div class="progress-item"><h4>Mocks:</h4>'; /* ... Same mock rendering ... */
+             const mocks = (data.mockTests || []).sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 5);
+             if (mocks.length > 0) mocks.forEach(t => mocksHTML += `<div class="mock-test-entry-admin"><span>${t.name}(${t.date}) - <strong>${t.marks ?? 'N/A'}</strong></span></div>`);
+             else mocksHTML += '<p>None.</p>'; mocksHTML += '</div>';
+             container.innerHTML = statsHTML + subjectsHTML + mocksHTML;
+         }
+        function displaySubjectChaptersAdmin(subjectName) {
+            // ... (Same chapter display logic as previous step, using currentStudentDataForAdmin) ...
+             console.log(`Admin chapters: ${subjectName}`); const container = document.getElementById('studentProgressResult');
+             if (!container || !currentStudentDataForAdmin || !globalExamConfig) { container.innerHTML = '<p>Data Error.</p>'; return; }
+             const data = currentStudentDataForAdmin; const examType = data.examType || 'N/A'; const config = globalExamConfig[examType]; const progress = data.progress || {};
+             if (!config?.subjectChapterMapping?.[subjectName]) { container.innerHTML = `<p>Config Error: ${subjectName}</p>`; return; }
+             const chapters = config.subjectChapterMapping[subjectName]; const toggles = config.toggles || [];
+             let html = `<button onclick="displayStudentData(currentStudentDataForAdmin, document.getElementById('studentProgressResult'))" class="back-button-admin"><i class="fas fa-arrow-left"></i> Back</button><h4>${subjectName} Chapters</h4>`;
+             if (chapters.length === 0) html += '<p>None.</p>';
+             else chapters.forEach(chapter => { /* ... Same chapter rendering logic ... */
+                 const chapData = progress[chapter] || { p: 0, t: {} }; const chapProg = chapData.progress || 0; const chapToggles = chapData.toggles || {};
+                 html += `<div class="chapter-detail-admin"><div class="flex justify-between items-center mb-2"><h5 class="font-semibold">${chapter}</h5><span class="text-sm text-primary">${chapProg.toFixed(1)}%</span></div> <div class="subject-progress-bar mb-3"><div class="subject-progress-fill" style="width:${chapProg.toFixed(1)}%;"></div></div><div class="chapter-toggles-admin">`;
+                 toggles.forEach(toggle => { const isChecked = chapToggles[toggle]; const safeC = chapter.replace(/[^a-zA-Z0-9]/g,''); const safeT = toggle.replace(/[^a-zA-Z0-9]/g,''); const id = `a-${safeC}-${safeT}`; html += `<label for="${id}"><input type="checkbox" id="${id}" ${isChecked?'checked':''} disabled> ${toggle}</label>`; }); html += `</div></div>`;
+             });
+             container.innerHTML = html;
+         }
+
+        // --- Logout Function ---
+        function logout() {
+             if (!auth) return;
+             console.log("Admin: Logging out...");
+             auth.signOut().catch(e => console.error("Logout error:", e));
+             // onAuthStateChanged handles UI update
+         }
+
+    </script>
+</body>
+</html>
